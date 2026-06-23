@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday, Special Someone ✨</title>
+    <style>
+        /* --- CSS VARIABLES & THEME --- */
+        :root {
+            --bg-color: #0a0a0c;
+            --card-bg: rgba(18, 18, 24, 0.75);
+            --accent-pink: #ff2a74;
+            --accent-purple: #8a2be2;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --neon-glow: 0 0 20px rgba(255, 42, 116, 0.6);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        /* --- BACKGROUND EFFECTS --- */
+        #canvas-ambient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .gradient-orb {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,42,116,0.15) 0%, rgba(0,0,0,0) 70%);
+            top: -100px;
+            left: -100px;
+            z-index: 0;
+            filter: blur(40px);
+            animation: float-orb 12s infinite alternate ease-in-out;
+        }
+
+        .gradient-orb.secondary {
+            background: radial-gradient(circle, rgba(138,43,226,0.15) 0%, rgba(0,0,0,0) 70%);
+            bottom: -100px;
+            right: -100px;
+            top: auto;
+            left: auto;
+            animation: float-orb 12s infinite alternate-reverse ease-in-out;
+        }
+
+        /* --- INTERACTIVE CONTAINER --- */
+        .wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* --- SCREEN STATES --- */
+        .screen {
+            display: none;
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* --- ENVELOPE SCREEN --- */
+        .heart-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            position: relative;
+            margin-top: 30px;
+            transition: transform 0.3s ease;
+        }
+
+        .heart-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .heart-icon {
+            font-size: 4rem;
+            color: var(--accent-pink);
+            filter: drop-shadow(var(--neon-glow));
+            animation: pulse 1.5s infinite;
+        }
+
+        /* --- MAIN CELEBRATION SCREEN --- */
+        .avatar-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+        }
+
+        .avatar-glow {
+            position: absolute;
+            inset: -4px;
+            background: linear-gradient(45deg, var(--accent-pink), var(--accent-purple));
+            border-radius: 50%;
+            animation: rotateGlow 4s linear infinite;
+        }
+
+        .avatar {
+            position: absolute;
+            inset: 2px;
+            background: #1a1a24;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #ffffff, #ffe3ec, var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Countdown Grid */
+        .countdown-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .count-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 12px;
+        }
+
+        .count-num {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-pink);
+            text-shadow: var(--neon-glow);
+        }
+
+        .count-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+
+        /* Message Display */
+        .message-box {
+            min-height: 80px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .typing-text {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #e5e7eb;
+        }
+
+        /* Control Button */
+        .action-btn {
+            background: linear-gradient(135deg, var(--accent-pink) 0%, var(--accent-purple) 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 42, 116, 0.4);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 42, 116, 0.6);
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255,42,116,0.5)); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(255,42,116,0.8)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255,42,116,0.5)); }
+        }
+
+        @keyframes float-orb {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 40px) scale(1.1); }
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="gradient-orb"></div>
+    <div class="gradient-orb secondary"></div>
+    <canvas id="canvas-ambient"></canvas>
+
+    <div class="wrapper">
+        <div class="card" id="main-card">
+            
+            <!-- SCREEN 1: ENVELOPE / LOCK -->
+            <div id="screen-unlock" class="screen active">
+                <div class="avatar-container">
+                    <div class="avatar-glow"></div>
+                    <div class="avatar">🎁</div>
+                </div>
+                <h2>A special delivery...</h2>
+                <p class="subtitle" style="margin-top: 8px;">Just for you. Tap the heart to open.</p>
+                <button class="heart-btn" id="unlock-btn" aria-label="Open greeting">
+                    <div class="heart-icon">❤️</div>
+                </button>
+            </div>
+
+            <!-- SCREEN 2: MAIN CELEBRATION -->
+            <div id="screen-content" class="screen">
+                <div class="avatar-container">
+                    <div class="avatar-glow"></div>
+                    <div class="avatar">👑</div>
+                </div>
+                <h1 id="greeting-title">Happy Birthday!</h1>
+                <p class="subtitle" id="greeting-subtitle">To the most wonderful person in my world ✨</p>
+                
+                <!-- Custom Dynamic Tracker -->
+                <div class="countdown-container">
+                    <div class="count-box">
+                        <div class="count-num" id="time-hours">00</div>
+                        <div class="count-label">Hours</div>
+                    </div>
+                    <div class="count-box">
+                        <div class="count-num" id="time-mins">00</div>
+                        <div class="count-label">Mins</div>
+                    </div>
+                    <div class="count-box">
+                        <div class="count-num" id="time-secs">00</div>
+                        <div class="count-label">Secs</div>
+                    </div>
+                </div>
+
+                <!-- Immersive Note Box -->
+                <div class="message-box">
+                    <p class="typing-text" id="birthday-note"></p>
+                </div>
+
+                <button class="action-btn" id="next-message-btn">Next Thought ✨</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ARCHITECTURE ---
+        const config = {
+            targetName: "Favorite Human", 
+            // Array of emotional narrative stages
+            messages: [
+                "Today is entirely about you. I just wanted to create a little space that reflects how bright you make everything look.",
+                "If I tried to list every single thing I admire about you, we'd be here until your next birthday. You're just magic.",
+                "Thank you for being my anchor, my favorite distraction, and the absolute highlight of my days.",
+                "May this year bring you exactly the kind of joy, laughs, and peace you hand out so effortlessly to everyone else.",
+                "Click anywhere on the screen to shower yourself with love. Happy Birthday! 💖"
+            ]
+        };
+
+        let currentMessageIndex = 0;
+        let ambientHearts = [];
+        
+        // --- DOM ELEMENTS ---
+        const canvas = document.getElementById('canvas-ambient');
+        const ctx = canvas.getContext('2d');
+        const screenUnlock = document.getElementById('screen-unlock');
+        const screenContent = document.getElementById('screen-content');
+        const unlockBtn = document.getElementById('unlock-btn');
+        const nextBtn = document.getElementById('next-message-btn');
+        const noteElement = document.getElementById('birthday-note');
+        const card = document.getElementById('main-card');
+
+        // --- BACKGROUND CANVAS ENGINE ---
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class HeartParticle {
+            constructor(x, y, isBurst = false) {
+                this.x = x;
+                this.y = y;
+                this.size = isBurst ? Math.random() * 15 + 10 : Math.random() * 10 + 6;
+                this.speedY = isBurst ? (Math.random() * -4 - 1) : (Math.random() * -1.5 - 0.5);
+                this.speedX = isBurst ? (Math.random() * 4 - 2) : (Math.random() * 1 - 0.5);
+                this.opacity = 1;
+                this.fadeRate = isBurst ? 0.015 : 0.006;
+                this.hue = Math.random() > 0.3 ? 340 : 280; // Mix of pink/purple tints
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.opacity -= this.fadeRate;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = `hsl(${this.hue}, 100%, 65%)`;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = `hsl(${this.hue}, 100%, 60%)`;
+                
+                // Classic vector heart path
+                ctx.beginPath();
+                const topY = this.y - this.size / 2;
+                ctx.moveTo(this.x, this.y);
+                ctx.bezierCurveTo(this.x - this.size, topY, this.x - this.size, this.y + this.size / 3, this.x, this.y + this.size);
+                ctx.bezierCurveTo(this.x + this.size, this.y + this.size / 3, this.x + this.size, topY, this.x, this.y);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function createBurst(x, y) {
+            for (let i = 0; i < 15; i++) {
+                ambientHearts.push(new HeartParticle(x, y, true));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Randomly sprout passive ambient floating hearts
+            if (Math.random() < 0.04) {
+                ambientHearts.push(new HeartParticle(Math.random() * canvas.width, canvas.height + 20));
+            }
+
+            for (let i = ambientHearts.length - 1; i >= 0; i--) {
+                ambientHearts[i].update();
+                ambientHearts[i].draw();
+                if (ambientHearts[i].opacity <= 0) {
+                    ambientHearts.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Interactive Burst click hook
+        window.addEventListener('click', (e) => {
+            if(screenContent.classList.contains('active')) {
+                createBurst(e.clientX, e.clientY);
+            }
+        });
+
+        // --- TYPING ENGINE ---
+        function typeWriter(text, index = 0) {
+            if (index === 0) {
+                noteElement.innerHTML = "";
+                nextBtn.style.pointerEvents = "none";
+                nextBtn.style.opacity = "0.5";
+            }
+            
+            if (index < text.length) {
+                noteElement.innerHTML += text.charAt(index);
+                setTimeout(() => typeWriter(text, index + 1), 35);
+            } else {
+                nextBtn.style.pointerEvents = "auto";
+                nextBtn.style.opacity = "1";
+            }
+        }
+
+        // --- DYNAMIC RUNNING TIMER ---
+        // Measures exact track times dynamically for a continuous living state inside 2026
+        function updateLiveCounter() {
+            const now = new Date();
+            document.getElementById('time-hours').innerText = String(now.getHours()).padStart(2, '0');
+            document.getElementById('time-mins').innerText = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('time-secs').innerText = String(now.getSeconds()).padStart(2, '0');
+        }
+        setInterval(updateLiveCounter, 1000);
+        updateLiveCounter();
+
+        // --- USER NARRATIVE INTERACTION FLOW ---
+        unlockBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent trigger burst exactly on button
+            createBurst(window.innerWidth / 2, window.innerHeight / 2);
+            
+            screenUnlock.classList.remove('active');
+            screenContent.classList.add('active');
+            
+            // Tilt UX update
+            card.style.transform = "rotateX(0deg) rotateY(0deg)";
+            
+            setTimeout(() => {
+                typeWriter(config.messages[0]);
+            }, 400);
+        });
+
+        nextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            currentMessageIndex++;
+            
+            if (currentMessageIndex < config.messages.length) {
+                typeWriter(config.messages[currentMessageIndex]);
+                if(currentMessageIndex === config.messages.length - 1) {
+                    nextBtn.innerText = "Read Again ❤️";
+                }
+            } else {
+                currentMessageIndex = 0;
+                nextBtn.innerText = "Next Thought ✨";
+                typeWriter(config.messages[0]);
+            }
+        });
+
+        // Delicate gyroscope micro-tilt impact on desktop pointer movement
+        window.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.clientX) / 25;
+            const yAxis = (window.innerHeight / 2 - e.clientY) / 25;
+            if(screenUnlock.classList.contains('active')) {
+                card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            }
+        });
+    </script>
+</body>
+</html>
